@@ -1,7 +1,7 @@
 #ifndef __YEELIGHT_H__
 #define __YEELIGHT_H__
 
-extern void yeelight_ip_callback();
+extern void yeelight_start();
 
 #define kSuppportCommandSize    (16)
 
@@ -9,16 +9,21 @@ extern void yeelight_ip_callback();
 #define copyStringInvalidChar   (-1)
 #define copyStringCmdTooLong    (-2)
 
+#define kMaxCommandString       (256)
+
 typedef struct YeelightConnectionDataStruct
 {
     struct espconn	mESPConnection;
     esp_udp			mESPUDP;
+    struct espconn	mESPConnectionTCP;
+    esp_tcp			mESPTCP;
     xTaskHandle     mTaskUDPHandle;
 
     const char      *searchStart;
     const char      *searchEnd;
 
     bool            mIGMPJoined;
+    bool            mBulbQueryComplete;
 
 } YeelightConnectionData;
 
@@ -105,5 +110,27 @@ enum YeeLightProcessSearchID
 
     kYLProcessSearchCount,
 };
+
+enum YeelightProperties
+{
+    kYLPropertyPower = 1 << 0,
+    kYLPropertyBrightness = 1 << 1,
+    kYLPropertyColourTemperature = 1 << 2,
+    kYLPropertyRGB = 1 << 3,
+    kYLPropertyHue = 1 << 4,
+    kYLPropertySat = 1 << 5,
+    kYLPropertyColourMode = 1 << 6,
+    kYLPropertyFlowing = 1 << 7,
+    kYLPropertyDelayOff = 1 << 8,
+    kYLPropertyFlowParams = 1 << 9,
+    kYLPropertyMusicOn = 1 << 10,
+    kYLPropertyName = 1 << 11,
+
+    kYLPropertyCount = 12,
+};
+
+extern bool command_get_prop(YeelightConnectionData *yeelightData, YeelightData *bulb, int properties);
+
+extern bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData *bulb);
 
 #endif

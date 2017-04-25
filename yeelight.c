@@ -13,7 +13,11 @@
 #include "yeelight.h"
 
 #define YEE_DEBUG
-#undef YEE_DEBUG
+
+#ifndef YEE_DEBUG
+#undef os_printf
+#define os_printf
+#endif
 
 YeelightConnectionData yeelightConnection;
 
@@ -65,6 +69,24 @@ const static char * const sYeeLightModelList[] =
     "stripe",
 };
 
+static const char *const sYeelightProperties[] =
+{
+    "power",
+    "bright",
+    "ct",
+    "rgb",
+    "hue",
+    "sat",
+    "color_mode",
+    "flowing",
+    "delayoff",
+    "flow_params",
+    "music_on",
+    "name",
+};
+
+static int sYLID = 1;
+
 void join_igmp()
 {
     struct ip_addr ipgroup;
@@ -87,7 +109,7 @@ void join_igmp()
 
     if (iret != 0)
     {
-        printf("Could not join\n");
+        os_printf("Could not join\n");
     }
 }
 
@@ -371,9 +393,7 @@ bool process_search_yeelight(const char *dataPointer, YeelightData *yeelightData
     IP4_ADDR(&yeelightData->mIPAddress, ipAddress1, ipAddress2, ipAddress3, ipAddress4);
     yeelightData->mPort = port;
 
-#ifdef YEE_DEBUG
     os_printf("%x:%d\n", yeelightData->mIPAddress, yeelightData->mPort);
-#endif
 
     return true;
 }
@@ -392,9 +412,7 @@ bool process_search_id(const char *dataPointer, YeelightData *yeelightData)
     yeelightData->mIDHigh = hexHigh;
     yeelightData->mIDLow = hexLow;
 
-#ifdef YEE_DEBUG
     os_printf("id: %x %x\n", yeelightData->mIDHigh, yeelightData->mIDLow);
-#endif
 
     return true;
 }
@@ -420,9 +438,7 @@ bool process_search_model(const char *dataPointer, YeelightData *yeelightData)
         {
             yeelightData->mModel = i;
 
-#ifdef YEE_DEBUG
            os_printf("model: %d\n", yeelightData->mModel);
-#endif
             return true;
         }
     }
@@ -442,9 +458,7 @@ bool process_search_firmwareVersion(const char *dataPointer, YeelightData *yeeli
 
     yeelightData->mFirmwareVersion = firmwareVersion;
 
-#ifdef YEE_DEBUG
     os_printf("fw: %d\n", yeelightData->mFirmwareVersion);
-#endif
 
     return true;
 }
@@ -478,9 +492,7 @@ bool process_search_support(const char *dataPointer, YeelightData *yeelightData)
 
         if (bytesProcessed == 0)
         {
-#ifdef YEE_DEBUG
             os_printf("supported: %x\n", yeelightData->mSupports);
-#endif
             return true;
         }
     }
@@ -504,9 +516,7 @@ bool process_search_power(const char *dataPointer, YeelightData *yeelightData)
     
     yeelightData->mPower = power;
 
-#ifdef YEE_DEBUG
     os_printf("power: %d\n", yeelightData->mPower);
-#endif
 
     return true;
 }
@@ -523,9 +533,7 @@ bool process_search_brightness(const char *dataPointer, YeelightData *yeelightDa
 
     yeelightData->mBrightness = brightness;
 
-#ifdef YEE_DEBUG
     os_printf("br: %d\n", yeelightData->mBrightness);
-#endif
 
     return true;
 }
@@ -542,9 +550,7 @@ bool process_search_colour_mode(const char *dataPointer, YeelightData *yeelightD
 
     yeelightData->mColourMode = colourMode;
 
-#ifdef YEE_DEBUG
     os_printf("cm: %d\n", yeelightData->mColourMode);
-#endif
 
     return true;
 }
@@ -561,9 +567,7 @@ bool process_search_colour_temperature(const char *dataPointer, YeelightData *ye
 
     yeelightData->mColourTemperature = colourTemperature;
 
-#ifdef YEE_DEBUG
     os_printf("ct: %d\n", yeelightData->mColourTemperature);
-#endif
 
     return true;
 }
@@ -580,9 +584,7 @@ bool process_search_rgb(const char *dataPointer, YeelightData *yeelightData)
 
     yeelightData->mRGB = rgb;
 
-#ifdef YEE_DEBUG
     os_printf("rgb: %x\n", yeelightData->mRGB);
-#endif
 
     return true;
 }
@@ -599,9 +601,7 @@ bool process_search_hue(const char *dataPointer, YeelightData *yeelightData)
 
     yeelightData->mHue = hue;
 
-#ifdef YEE_DEBUG
     os_printf("hue: %d\n", yeelightData->mHue);
-#endif
 
     return true;
 }
@@ -618,9 +618,7 @@ bool process_search_saturation(const char *dataPointer, YeelightData *yeelightDa
 
     yeelightData->mSaturation = saturation;
 
-#ifdef YEE_DEBUG
     os_printf("sat: %d\n", yeelightData->mSaturation);
-#endif
 
     return true;
 }
@@ -634,9 +632,7 @@ bool process_search_name(const char *dataPointer, YeelightData *yeelightData)
         return false;
     }
 
-#ifdef YEE_DEBUG
     os_printf("name: %s\n", yeelightData->mAssignedName);
-#endif
 
     return true;
 }
@@ -658,6 +654,8 @@ static bool (*sYeelightProcessSearchFunctions[])(const char *dataPointer, Yeelig
     process_search_name,
 };
 
+static bool packetSent = false;
+
 void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short length)
 {
 //	struct espconn *this_connection = (struct espconn *)arg;
@@ -666,9 +664,9 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
 
     search_packet_init(packetData, length);
 
+    YeelightData *yeelightData = NULL;
     for(i = 0; i < kYLProcessSearchCount; i++)
     {
-        YeelightData *yeelightData;
         const char *t = search_packet(sYeelightProcessSearches[i]);
 
         //os_printf("%s:%s\n",sYeelightProcessSearches[i],t);
@@ -695,13 +693,18 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
 
         sYeelightProcessSearchFunctions[i](t, yeelightData);
     }
+
+    if (yeelightData && !packetSent)
+    {
+        command_get_prop(&yeelightConnection, yeelightData, kYLPropertyPower | kYLPropertyBrightness);
+        packetSent = true;
+    }
 }
 
 void  udp_send_callback(void *arg)
 {
 	struct espconn *this_connection = (struct espconn *)arg;
 
-#ifdef YEE_DEBUG
 	os_printf("udp sent callback: %d.%d.%d.%d:%d\n", this_connection->proto.udp->remote_ip[0]
 	, this_connection->proto.udp->remote_ip[1]
 	, this_connection->proto.udp->remote_ip[2]
@@ -712,7 +715,6 @@ void  udp_send_callback(void *arg)
 	, this_connection->proto.udp->local_ip[2]
 	, this_connection->proto.udp->local_ip[3],
 	this_connection->proto.udp->local_port);
-#endif
 }
 
 
@@ -738,17 +740,11 @@ void task_udp_create(YeelightConnectionData *yeelightData)
 	*(uint32 *)yeelightData->mESPUDP.local_ip = ipconfig.ip.addr;
 
 	err = espconn_create(&yeelightData->mESPConnection);
-#ifdef YEE_DEBUG
 	os_printf("err1: %d\n",err);
-#endif
 	err = espconn_regist_recvcb(&yeelightData->mESPConnection, udp_recv_callback);
-#ifdef YEE_DEBUG
 	os_printf("err2: %d\n",err);
-#endif
 	err = espconn_regist_sentcb(&yeelightData->mESPConnection, udp_send_callback);
-#ifdef YEE_DEBUG
 	os_printf("err2a: %d\n",err);
-#endif
 }
 
 void task_udp_send(YeelightConnectionData *yeelightData)
@@ -756,16 +752,12 @@ void task_udp_send(YeelightConnectionData *yeelightData)
 	sint8 err;
 
 	err = espconn_send(&yeelightData->mESPConnection, (uint8*)sYeeLightSearchCommand, sizeof(sYeeLightSearchCommand)-1);
-#ifdef YEE_DEBUG
 	os_printf("err3: %d\n",err);
-#endif
 }
 
 void task_udp(void *pvParameters)
 {
-#ifdef YEE_DEBUG
     os_printf("In task\n");
-#endif
 
     int phase = 0;
 
@@ -787,16 +779,134 @@ void task_udp(void *pvParameters)
     }
 }
 
+//typedef void (* espconn_recv_callback)(void *arg, char *pdata, unsigned short len);
+//typedef void (* espconn_sent_callback)(void *arg);
+//typedef void (* espconn_connect_callback)(void *arg);
+
+
+void tcp_receive_callback(void *argument, char *dataPointer, unsigned short dataLength)
+{
+    os_printf("receive: %s\n", dataPointer);
+}
+
+void tcp_sent_callback(void *argument)
+{
+    os_printf("sent\n");
+}
+
+void tcp_disconnect_callback(void *argument)
+{
+    os_printf("disconnect\n");
+}
+
+void tcp_connect_callback(void *argument)
+{
+    struct espconn *connection = argument;
+
+    os_printf("connect\n");
+
+    espconn_regist_recvcb(connection, tcp_receive_callback);
+    espconn_regist_sentcb(connection, tcp_sent_callback);
+    espconn_regist_disconcb(connection, tcp_disconnect_callback);
+
+    sint8 error = espconn_sent(connection, connection->reserve, strlen(connection->reserve));
+
+    os_printf("tcp_send:sent: %d:%p:%d\n", error, connection->reserve, strlen(connection->reserve));
+}
+
+void tcp_reconnect_callback(void *argument, sint8 error)
+{
+    os_printf("re-connect: %d\n", error);
+}
+
+char commandString[kMaxCommandString];// = "{\"id\":1,\"method\":\"get_prop\",\"params\":[\"id\",\"power\",\"bright\"]}\r\n";
+
+bool command_get_prop(YeelightConnectionData *yeelightData, YeelightData *bulb, int properties)
+{
+    int charOffset;
+
+    if (properties == 0)
+    {
+        return false;
+    }
+
+    sprintf(commandString, "{\"id\":%d,\"method\":\"get_prop\",\"params\":[%n", sYLID, &charOffset);
+
+    char *t = commandString + charOffset; // I'm going to pretend that doing it like this is a SIGNIFICANT speed up and not just ugly
+
+    int i;
+
+    bool first = true;
+
+    for (i=0;i<kYLPropertyCount;i++)
+    {
+        if (properties & (1<<i))
+        {
+            if (!first)
+            {
+                *t = ',';
+                t++;
+            }
+            else
+            {
+                first = false;
+            }
+
+            *t = '"';
+            t++;
+            strcat(t,sYeelightProperties[i]); // Could get length and then memcpy instead, but faster but not nice
+            t += strlen(sYeelightProperties[i]);
+            *t = '"';
+            t++;
+        }
+    }
+
+    strcat(t,"]}\r\n");
+
+    os_printf("cmd: %s\n", commandString);
+
+    return tcp_send_command(yeelightData, bulb);
+}
+
+bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData *bulb)
+{
+    struct espconn  *tcpConnection = &yeelightData->mESPConnectionTCP;
+
+   	memset(tcpConnection, 0, sizeof(struct espconn));
+	memset(&yeelightData->mESPTCP, 0, sizeof(esp_tcp));
+
+	tcpConnection->type = ESPCONN_TCP;
+	tcpConnection->state = ESPCONN_NONE;
+	tcpConnection->proto.tcp = &yeelightData->mESPTCP;
+
+    IPADDR2_COPY(tcpConnection->proto.tcp->remote_ip, &bulb->mIPAddress);
+    tcpConnection->proto.tcp->remote_port = bulb->mPort;
+    tcpConnection->proto.tcp->local_port = espconn_port();
+
+    espconn_regist_connectcb(tcpConnection, tcp_connect_callback); // register connect callback
+    espconn_regist_reconcb(tcpConnection, tcp_reconnect_callback); // register reconnect callback as error handler
+
+    tcpConnection->reserve = commandString;
+
+    sint8 error = espconn_connect(tcpConnection);
+
+    if (error == 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 #define MAX_STACK_SIZE      (512)
 #define TASK_PRIORITY       (9)
 
 static const char const sYeeLightTask[] = "yeelight_udp_task";
 
-void yeelight_ip_callback()
+void yeelight_start()
 {
     xTaskCreate(task_udp, sYeeLightTask, MAX_STACK_SIZE, NULL, TASK_PRIORITY, &yeelightConnection.mTaskUDPHandle);
 
-#ifdef YEE_DEBUG
     os_printf("Finally here\n");
-#endif
 }
+
