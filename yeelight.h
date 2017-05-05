@@ -149,20 +149,6 @@ enum YeelightProperties
 
 extern void yeelight_start();
 
-// yeelight_parse
-extern bool process_search_id(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_model(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_firmwareVersion(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_support(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_power(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_brightness(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_colour_mode(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_colour_temperature(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_rgb(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_hue(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_saturation(const char *dataPointer, YeelightData *yeelightData);
-extern bool process_search_name(const char *dataPointer, YeelightData *yeelightData);
-
 // yeelight_data
 extern YeelightConnectionData yeelightConnection;
 extern int sYeelightID;
@@ -183,8 +169,10 @@ extern void task_udp(void *pvParameters);
 extern const char *search_packet(const char * const searchTerm);
 extern void search_packet_init(const char *searchPosition, unsigned short searchLength);
 
+// yeelight.c
 extern bool command_get_prop(YeelightConnectionData *yeelightData, YeelightData *bulb, int properties);
 
+// yeelight_tcp
 extern bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData *bulb);
 
 #endif
