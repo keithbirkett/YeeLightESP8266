@@ -1,0 +1,14 @@
+Sort out UDP code that receives the multicast reply from the bulbs.
+Make it ID a bulb and see if we have a record for it, then update or create a new one as appropriate.
+
+Add more commands
+
+Process command results
+
+Process bulb tcp updates
+
+Fix hard coded port and multicast address.
+
+Add method to send commands to the bulbs. Either single bulb, groups, all
+
+Add api to get info back from the bulbs. Both as text and binary.
