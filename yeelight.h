@@ -65,13 +65,20 @@ typedef enum YeeLightColourModeEnum
 //const int kMaxYLName             = 64;
 #define kMaxYLName             (64)
 
+typedef struct YeelightIDStruct
+{
+    int32               mIDHigh;
+    int32               mIDLow;
+} YeelightID;
+
 typedef struct YeelightDataStruct
 {
+    int32               mIDHigh; // These must be at the top and must match the YeelightID struct
+    int32               mIDLow;
+
     char                mAssignedName[kMaxYLName];
     ip_addr_t           mIPAddress;
     uint16              mPort;
-    int32               mIDHigh;
-    int32               mIDLow;
     int32               mSupports;
     int32               mFirmwareVersion;
 
@@ -82,6 +89,7 @@ typedef struct YeelightDataStruct
     u8                  mColourMode;
     u8                  mSaturation;
     u8                  mBrightness;
+    u8                  mLocalID;
     bool                mPower;
 
     struct YeelightDataStruct   *mNext;
@@ -151,8 +159,12 @@ extern void yeelight_start();
 
 // yeelight_data
 extern YeelightConnectionData yeelightConnection;
-extern int sYeelightID;
+extern YeelightData *yeelightsList;
+extern int sYeelightCommandID;
+extern int sYeelightNextID;
+
 extern char sYeelightCommandString[kMaxCommandString];
+
 extern const char const sYeeLightSearchCommand[];
 extern const char const sYeeLightMulicastAddress[];
 extern const char * const sYeeLightCommandList[];
@@ -174,5 +186,12 @@ extern bool command_get_prop(YeelightConnectionData *yeelightData, YeelightData 
 
 // yeelight_tcp
 extern bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData *bulb);
+
+// yeeligh_list
+extern YeelightData *list_search_light(int32 highID, int32 lowID);
+extern void list_add(YeelightData *light);
+extern int list_count();
+extern void list_lights();
+
 
 #endif

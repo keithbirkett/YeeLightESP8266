@@ -69,8 +69,11 @@ const char *const sYeelightProperties[] =
     "name",
 };
 
-int sYeelightID = 1;
+int sYeelightCommandID = 1;
+int sYeelightNextID = 1;
 
 char sYeelightCommandString[kMaxCommandString];// = "{\"id\":1,\"method\":\"get_prop\",\"params\":[\"id\",\"power\",\"bright\"]}\r\n";
 
 YeelightConnectionData yeelightConnection;
+
+YeelightData *yeelightsList = 0;

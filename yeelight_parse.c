@@ -299,7 +299,7 @@ bool process_search_id(const char *dataPointer, YeelightData *yeelightData)
     yeelightData->mIDHigh = hexHigh;
     yeelightData->mIDLow = hexLow;
 
-    os_printf("id: %x %x\n", yeelightData->mIDHigh, yeelightData->mIDLow);
+    os_printf("id: %08x%08x\n", yeelightData->mIDHigh, yeelightData->mIDLow);
 
     return true;
 }

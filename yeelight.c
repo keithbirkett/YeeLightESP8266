@@ -11,7 +11,7 @@ bool command_get_prop(YeelightConnectionData *yeelightData, YeelightData *bulb, 
         return false;
     }
 
-    sprintf(sYeelightCommandString, "{\"id\":%d,\"method\":\"get_prop\",\"params\":[%n", sYeelightID, &charOffset);
+    sprintf(sYeelightCommandString, "{\"id\":%d,\"method\":\"get_prop\",\"params\":[%n", sYeelightCommandID, &charOffset);
 
     char *t = sYeelightCommandString + charOffset; // I'm going to pretend that doing it like this is a SIGNIFICANT speed up and not just ugly
 

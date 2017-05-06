@@ -33,6 +33,7 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
 	struct espconn *this_connection = (struct espconn *)connectionPtr;
 	os_printf("udp recv callback: %x\n", *(int *)this_connection->proto.udp->remote_ip);
     int i;
+    YeelightID yeelightID;
 
     search_packet_init(packetData, length);
 
@@ -52,7 +53,7 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
             }
             else
             {
-                yeelightData = (YeelightData *)zalloc(sizeof(YeelightData));
+                yeelightData = (YeelightData *)&yeelightID; // Fake storage just to pick up the without using too much stack space
             }
         }
         else
@@ -64,13 +65,39 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
         }
 
         sYeelightProcessSearchFunctions[i](t, yeelightData);
+
+        if (i == kYLProcessSearchID)
+        {
+            yeelightData = list_search_light(yeelightData->mIDHigh, yeelightData->mIDLow);
+
+            if (yeelightData == NULL)
+            {
+                yeelightData = (YeelightData *)zalloc(sizeof(YeelightData));
+
+                yeelightData->mIDHigh = yeelightID.mIDHigh;
+                yeelightData->mIDLow = yeelightID.mIDLow;
+
+                yeelightData->mLocalID = sYeelightNextID;
+                sYeelightNextID++;
+
+                list_add(yeelightData);
+                os_printf("Light not found adding new.\n");
+            }
+            else
+            {
+                os_printf("Light found, using previous.\n");
+            }
+        }
     }
 
-    if (yeelightData && !packetSent)
-    {
-        command_get_prop(&yeelightConnection, yeelightData, kYLPropertyPower | kYLPropertyBrightness);
-        packetSent = true;
-    }
+    list_lights();
+
+    // Test code
+    // if (yeelightData && !packetSent)
+    // {
+    //     command_get_prop(&yeelightConnection, yeelightData, kYLPropertyPower | kYLPropertyBrightness);
+    //     packetSent = true;
+    // }
 }
 
 void  udp_send_callback(void *arg)
