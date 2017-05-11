@@ -8,7 +8,7 @@ int yeelight_search_command_size()
     return sizeof(sYeeLightSearchCommand) - 1;
 }
 
-const char * const sYeeLightCommandList[] =
+const char * const sYeelightCommandList[] =
 {
     "get_prop",
     "set_ct_abx",
@@ -45,6 +45,13 @@ const char * const sYeelightProcessSearches[] =
     "sat:",
     "name:",
 };
+
+const char * const sYeelightEffectType[] =
+{
+    "sudden",
+    "smooth"
+};
+
 
 const char * const sYeeLightModelList[] =
 {

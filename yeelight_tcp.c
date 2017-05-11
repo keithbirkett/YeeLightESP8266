@@ -58,6 +58,8 @@ bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData *bulb)
 
     sint8 error = espconn_connect(tcpConnection);
 
+    sYeelightCommandID++;
+
     if (error == 0)
     {
         return true;

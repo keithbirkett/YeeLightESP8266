@@ -53,7 +53,7 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
             }
             else
             {
-                yeelightData = (YeelightData *)&yeelightID; // Fake storage just to pick up the without using too much stack space
+                yeelightData = (YeelightData *)&yeelightID; // Fake storage just to pick up the ID without using too much stack space
             }
         }
         else
@@ -93,11 +93,11 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
     list_lights();
 
     // Test code
-    // if (yeelightData && !packetSent)
-    // {
-    //     command_get_prop(&yeelightConnection, yeelightData, kYLPropertyPower | kYLPropertyBrightness);
-    //     packetSent = true;
-    // }
+    if (yeelightData && !packetSent)
+    {
+        command_set_adjust(&yeelightConnection, yeelightData, kTLAdjustCircle, kTLAdjustColour);
+        packetSent = true;
+    }
 }
 
 void  udp_send_callback(void *arg)

@@ -95,28 +95,48 @@ typedef struct YeelightDataStruct
     struct YeelightDataStruct   *mNext;
 } YeelightData;
 
-typedef enum YeeLightCommandIDEnum
+typedef enum YeelightEffectTypeEnum
 {
-    kYLSupportGetProp,
-    kYLSupportSetCTAbx,
-    kYLSupportSetRGB,
-    kYLSupportSetHSV,
-    kYLSupportSetBright,
-    kYLSupportSetPower,
-    kYLSupportToggle,
-    kYLSupportSetDefault,
+    kTLEffectSudden,
+    kTLEffectSmooth,
+} YeelightEffectType;
+
+typedef enum YeelightAdjustActionEnum
+{
+    kTLAdjustIncrease,
+    kTLAdjustDecrease,
+    kTLAdjustCircle,
+} YeelightAdjustAction;
+
+typedef enum YeelightAdjustPropEnum
+{
+    kTLAdjustBright,
+    kTLAdjustCT,
+    kTLAdjustColour,
+} YeelightAdjustProp;
+
+typedef enum YeelightCommandIDEnum
+{
+    kYLSupportGetProp,          // Implemented
+    kYLSupportSetCTAbx,         // Implemented
+    kYLSupportSetRGB,           // Implemented
+    kYLSupportSetHSV,           // Implemented
+    kYLSupportSetBright,        // Implemented
+    kYLSupportSetPower,         // Implemented
+    kYLSupportToggle,           // Implemented
+    kYLSupportSetDefault,       // Implemented
     kYLSupportStartCF,
     kYLSupportStopCF,
     kYLSupportSetScene,
     kYLSupportCronAdd,
     kYLSupportCronGet,
     kYLSupportCronDel,
-    kYLSupportSetAdjust,
+    kYLSupportSetAdjust,        // Implemented
     kYLSupportSetMusic,
     kYLSupportSetName,
 
     kYLSupportCount,
-} YeeLightCommandID;
+} YeelightCommandID;
 
 enum YeeLightProcessSearchID
 {
@@ -167,10 +187,12 @@ extern char sYeelightCommandString[kMaxCommandString];
 
 extern const char const sYeeLightSearchCommand[];
 extern const char const sYeeLightMulicastAddress[];
-extern const char * const sYeeLightCommandList[];
+extern const char * const sYeelightCommandList[];
 extern const char * const sYeelightProcessSearches[];
 extern const char * const sYeeLightModelList[];
 extern const char *const sYeelightProperties[];
+extern const char * const sYeelightEffectType[];
+
 extern bool (*sYeelightProcessSearchFunctions[])(const char *dataPointer, YeelightData *yeelightData);
 extern int yeelight_search_command_size();
 
@@ -183,6 +205,14 @@ extern void search_packet_init(const char *searchPosition, unsigned short search
 
 // yeelight.c
 extern bool command_get_prop(YeelightConnectionData *yeelightData, YeelightData *bulb, int properties);
+extern bool command_set_ct_abx(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
+extern bool command_set_rgb(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
+extern bool command_set_hsv(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
+extern bool command_set_bright(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
+extern bool command_set_power(YeelightConnectionData *yeelightData, YeelightData *bulb, bool on, YeelightEffectType effect, int duration);
+extern bool command_set_toggle(YeelightConnectionData *yeelightData, YeelightData *bulb);
+extern bool command_set_default(YeelightConnectionData *yeelightData, YeelightData *bulb);
+extern bool command_set_adjust(YeelightConnectionData *yeelightData, YeelightData *bulb, YeelightAdjustAction action, YeelightAdjustProp property);
 
 // yeelight_tcp
 extern bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData *bulb);

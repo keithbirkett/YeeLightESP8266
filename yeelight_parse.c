@@ -371,7 +371,7 @@ bool process_search_support(const char *dataPointer, YeelightData *yeelightData)
 
         for(i = 0; i < kYLSupportCount; i++)
         {
-            if (strcmp(supportCommand, sYeeLightCommandList[i]) == 0)
+            if (strcmp(supportCommand, sYeelightCommandList[i]) == 0)
             {
                 yeelightData->mSupports |= 1 << i;
             }
