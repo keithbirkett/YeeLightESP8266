@@ -95,7 +95,7 @@ void  udp_recv_callback(void *connectionPtr, char *packetData, unsigned short le
     // Test code
     if (yeelightData && !packetSent)
     {
-        command_set_adjust(&yeelightConnection, yeelightData, kTLAdjustCircle, kTLAdjustColour);
+        //command_set_adjust(&yeelightConnection, yeelightData, kTLAdjustCircle, kTLAdjustColour);
         packetSent = true;
     }
 }
