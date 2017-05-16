@@ -214,44 +214,83 @@ typedef enum YeelightSimpleCommandFailureEnum
     kFailureCommand1,
     kFailureCommand2,
     kFailureEffect,
-    kFailureInt,
+    kFailureInt1,
+    kFailureInt2,
     kFailureHex,
 } YeelightSimpleCommandFailure;
+
+bool readCommandInt(int commandChar, unsigned int *valuePtr)
+{
+    if (!isdigit(commandChar))
+    {
+        return false;
+    }
+
+    int value = *valuePtr;
+
+    value *= 10;
+    value += commandChar - '0';
+
+    *valuePtr = value;
+
+    return true;
+}
+
+bool readCommandHex(int commandChar, unsigned int *valuePtr)
+{
+    commandChar = tolower(commandChar);
+
+    if (!(isdigit(commandChar) || (commandChar >= 'a' && commandChar <='f')))
+    {
+        os_printf("bailing: %d", commandChar);
+        return false;
+    }
+
+    int value = *valuePtr;
+    value <<= 4;
+    value += commandChar >='a' ? commandChar - 'a' + 10 : commandChar - '0';
+    *valuePtr = value;
+
+    os_printf("value: %d", value);
+
+    return true;
+}
 
 bool process_received_command(const char *commandBuffer)
 {
     YeelightSimpleCommandParsePhase *phaseControl = sInitialCommandRead;
-    int currentPhase;
+    int currentPhase = 0;
 
     int light = 0;
     YeelightCommandID command = 0;
-    int value1 = 0;
-    int value2 = 0;
+    unsigned int value1 = 0;
+    unsigned int value2 = 0;
     YeelightEffectType effect = kTLEffectSudden;
 
     size_t commandLength = strlen(sUARTCommandBuffer);
     sCommandFailure = 0;
+
+    os_printf("command: %s\n", sUARTCommandBuffer);
 
     int i,j;
     for(i=0;i<commandLength;i++)
     {
         int commandChar = sUARTCommandBuffer[i];
 
-        if (isspace(commandChar) || commandChar == 0)
+        if (isspace(commandChar))
         {
             currentPhase++;
+
+            continue;
         }
 
+        os_printf("commandChar: %c phase: %d:%d\n", commandChar, phaseControl[currentPhase], currentPhase);
         switch(phaseControl[currentPhase])
         {
             case kPhaseLight:
-                if (isdigit(commandChar))
+                if (!readCommandInt(commandChar, &light))
                 {
-                    light *= 10;
-                    light += commandChar - '0';
-                }
-                else
-                {
+                    sCommandFailure = kFailureLight;
                     return false;
                 }
                 break;
@@ -286,22 +325,49 @@ bool process_received_command(const char *commandBuffer)
                     effect = kTLEffectSmooth;
                 }
                 else
-                if (commandChar != SIMPLE_COMMAND_EFFECT_INSTANT)
                 {
-                    sCommandFailure = kFailureEffect;
-                    return false;
+                    if (commandChar != SIMPLE_COMMAND_EFFECT_INSTANT)
+                    {
+                        sCommandFailure = kFailureEffect;
+                        return false;
+                    }
                 }
                 break;
             case kPhaseValueInt1:
+                if (!readCommandInt(commandChar, &value1))
+                {
+                    sCommandFailure = kFailureInt1;
+                    return false;
+                }
                 break;
             case kPhaseValueInt2:
+                if (!readCommandInt(commandChar, &value2))
+                {
+                    sCommandFailure = kFailureInt2;
+                    return false;
+                }
                 break;
             case kPhaseValueHex1:
+                if (!readCommandHex(commandChar, &value1))
+                {
+                    sCommandFailure = kFailureHex;
+                    return false;
+                }
                 break;
             case kPhaseComplete:
+                i = commandLength;
                 break;
         }
     }
+
+    // int light = 0;
+    // YeelightCommandID command = 0;
+    // unsigned int value1 = 0;
+    // unsigned int value2 = 0;
+    // YeelightEffectType effect = kTLEffectSudden;
+
+
+    os_printf("light: %d, command: %d, value1: %d, value2: %d, hex: %08x effect: %d\n", light, command, value1, value2, value1, effect);
 
     return true;
 }
