@@ -3,6 +3,14 @@
 
 #include "uart.h"
 
+bool                sCommandReady = false;
+int                 sCommandLight;
+YeelightCommandID   sCommandID;
+unsigned int        sCommandValue1;
+unsigned int        sCommandValue2;
+YeelightEffectType  sCommandEffect;
+
+
 void display_command()
 {
     os_printf("cmd: %s\n", sYeelightCommandString);
@@ -28,9 +36,14 @@ bool command_set_rgb(YeelightConnectionData *yeelightData, YeelightData *bulb, i
     return set_command_with_value(yeelightData, bulb, kYLSupportSetRGB, value, effect, duration);
 }
 
-bool command_set_hsv(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration)
+bool command_set_hsv(YeelightConnectionData *yeelightData, YeelightData *bulb, int value1, int value2, YeelightEffectType effect, int duration)
 {
-    return set_command_with_value(yeelightData, bulb, kYLSupportSetHSV, value, effect, duration);
+    sprintf(sYeelightCommandString, "{\"id\":%d,\"method\":\"%s\",\"params\":[%d,%d,\"%s\",%d]}\r\n",
+    sYeelightCommandID, sYeelightCommandList[kYLSupportSetHSV], value1, value2, sYeelightEffectType[effect], duration);
+
+    display_command();
+
+    return tcp_send_command(yeelightData, bulb);
 }
 
 bool command_set_bright(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration)
@@ -360,16 +373,70 @@ bool process_received_command(const char *commandBuffer)
         }
     }
 
-    // int light = 0;
-    // YeelightCommandID command = 0;
-    // unsigned int value1 = 0;
-    // unsigned int value2 = 0;
-    // YeelightEffectType effect = kTLEffectSudden;
-
-
-    os_printf("light: %d, command: %d, value1: %d, value2: %d, hex: %08x effect: %d\n", light, command, value1, value2, value1, effect);
+    sCommandLight = light;
+    sCommandID = command;
+    sCommandValue1 = value1;
+    sCommandValue2 = value2;
+    sCommandEffect = effect;
+    sCommandReady = true;
 
     return true;
+}
+
+#define COMMAND_DURATION 500
+
+bool task_execute_command()
+{
+    if (sCommandReady)
+    {
+        os_printf("light: %d, command: %d, value1: %d, value2: %d, hex: %08x effect: %d\n",
+            sCommandLight, sCommandID, sCommandValue1, sCommandValue2, sCommandValue1, sCommandEffect);
+
+        YeelightConnectionData *yeelightData = &yeelightConnection;
+        YeelightData *bulb;
+
+        if (sCommandLight < 0 || sCommandLight >= list_count())
+        {
+            sCommandReady = false;
+            return false;
+        }
+
+        bulb = list_search_light_local(sCommandLight);
+
+        if (!bulb)
+        {
+            sCommandReady = false;
+            return false;
+        }
+
+        switch(sCommandID)
+        {
+            case kYLSupportSetCTAbx: 
+                command_set_ct_abx(yeelightData, bulb, sCommandValue1, sCommandEffect, COMMAND_DURATION);
+            break;
+            case kYLSupportSetRGB:
+                command_set_rgb(yeelightData, bulb, sCommandValue1, sCommandEffect, COMMAND_DURATION);
+            break;
+            case kYLSupportSetHSV:
+                command_set_hsv(yeelightData, bulb, sCommandValue1, sCommandValue2, sCommandEffect, COMMAND_DURATION);
+            break;
+            case kYLSupportSetBright:
+                command_set_bright(yeelightData, bulb, sCommandValue1, sCommandEffect, COMMAND_DURATION);
+            break;
+            case kYLSupportSetPower:
+                command_set_power(yeelightData, bulb, sCommandValue1 > 0, sCommandEffect, COMMAND_DURATION);
+            break;
+            case kYLSupportToggle:
+                command_set_toggle(yeelightData, bulb);
+            break;
+            case kYLSupportSetDefault:
+                command_set_default(yeelightData, bulb);
+            break;
+        }
+
+    }
+
+    sCommandReady = false;
 }
 
 void uart_add_to_buffer(uint8 uart, uint8 transmittedCharacter)

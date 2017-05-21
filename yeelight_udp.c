@@ -172,6 +172,9 @@ void task_udp(void *pvParameters)
                 task_udp_send(&yeelightConnection);
                 phase++;
             break;
+            case 1:
+                task_execute_command();
+            break;
         }
 
         //os_printf("Task run: %d\n", phase);

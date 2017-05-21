@@ -198,6 +198,7 @@ extern int yeelight_search_command_size();
 
 // yeelight_udp
 extern void task_udp(void *pvParameters);
+extern bool task_execute_command();
 
 //yeelight_parse
 extern const char *search_packet(const char * const searchTerm);
@@ -207,7 +208,7 @@ extern void search_packet_init(const char *searchPosition, unsigned short search
 extern bool command_get_prop(YeelightConnectionData *yeelightData, YeelightData *bulb, int properties);
 extern bool command_set_ct_abx(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
 extern bool command_set_rgb(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
-extern bool command_set_hsv(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
+extern bool command_set_hsv(YeelightConnectionData *yeelightData, YeelightData *bulb, int value1, int value2, YeelightEffectType effect, int duration);
 extern bool command_set_bright(YeelightConnectionData *yeelightData, YeelightData *bulb, int value, YeelightEffectType effect, int duration);
 extern bool command_set_power(YeelightConnectionData *yeelightData, YeelightData *bulb, bool on, YeelightEffectType effect, int duration);
 extern bool command_set_toggle(YeelightConnectionData *yeelightData, YeelightData *bulb);
@@ -219,6 +220,7 @@ extern bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData 
 
 // yeeligh_list
 extern YeelightData *list_search_light(int32 highID, int32 lowID);
+extern YeelightData *list_search_light_local(int32 id);
 extern void list_add(YeelightData *light);
 extern int list_count();
 extern void list_lights();

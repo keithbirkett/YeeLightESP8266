@@ -15,6 +15,22 @@ YeelightData *list_search_light(int32 highID, int32 lowID)
     return NULL;
 }
 
+YeelightData *list_search_light_local(int32 id)
+{
+    YeelightData *light;
+
+    for(light = yeelightsList; light; light = light->mNext)
+    {
+        if (light->mLocalID == id)
+        {
+            return light;
+        }
+    }
+
+    return NULL;
+}
+
+
 void list_add(YeelightData *light)
 {
     light->mNext = yeelightsList;

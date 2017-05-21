@@ -1,3 +1,5 @@
+Fix tcp_send_command so that it closes its connection at some appropriate point.
+
 Add method to send commands to the bulbs. Either single bulb, groups, all
 
 Add api to get info back from the bulbs. Both as text and binary, different ports?
