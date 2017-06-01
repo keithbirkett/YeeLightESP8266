@@ -1,14 +1,29 @@
 #include "yeelight.h"
 
+static os_timer_t sTimer;
+
+#define TCP_DISCONNECT_CALLBACK (1000)
 
 void tcp_receive_callback(void *argument, char *dataPointer, unsigned short dataLength)
 {
     os_printf("receive: %s\n", dataPointer);
 }
 
+void tcp_disconnect_timeout(void *pTimerArg)
+{
+    struct espconn *connection = pTimerArg;
+
+    sint8 error = espconn_disconnect(connection);
+
+    os_printf("tcp_disconnect_timeout: %d %p\n", error, connection);
+}
+
 void tcp_sent_callback(void *argument)
 {
-    os_printf("sent\n");
+    os_printf("sent\nsetting callback\n");
+    os_timer_disarm(&sTimer);
+    os_timer_setfn(&sTimer, (os_timer_func_t *)tcp_disconnect_timeout, argument);
+    os_timer_arm(&sTimer, TCP_DISCONNECT_CALLBACK, 0);
 }
 
 void tcp_disconnect_callback(void *argument)
@@ -57,6 +72,8 @@ bool tcp_send_command(YeelightConnectionData *yeelightData, YeelightData *bulb)
     tcpConnection->reserve = sYeelightCommandString;
 
     sint8 error = espconn_connect(tcpConnection);
+
+    os_printf("Sending command: %d %s %p\n", error, sYeelightCommandString, tcpConnection);
 
     sYeelightCommandID++;
 
